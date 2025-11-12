@@ -117,6 +117,7 @@ const DjangoQL = function (options) {
   this.currentModel = null;
   this.models = {};
   this.suggestionsAPIUrl = null;
+  this.specialFieldSuggestions = options.specialFieldSuggestions || {};
 
   this.token = token;
   this.lexer = lexer;
@@ -934,6 +935,17 @@ DjangoQL.prototype = {
         suggestions = ['=', ['!=', 'is not equal to']];
         snippetAfter = ' ';
         if (field && field.type !== 'bool') {
+          const specialOps = this.specialFieldSuggestions?.[context.field];
+          if (specialOps && Array.isArray(specialOps)) {
+            this.suggestions = specialOps.map((op) => {
+              if (typeof op === "string") {
+                return suggestion(op, "", ' "|"');
+              } else if (Array.isArray(op)) {
+                return suggestion(op[0], "", ' "|', op[1]);
+              }
+          });
+          break;
+          }
           if (['date', 'datetime'].indexOf(field.type) >= 0) {
             suggestions.push(
               ['~', 'contains'],
